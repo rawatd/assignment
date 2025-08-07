@@ -52,7 +52,7 @@ Converts input PDF documents (with text, tables, and images) into a **clean Mark
 
 ---
 
-### 🤖 Contextual RAG (Anthropic-style)
+###  Contextual RAG (Anthropic-style)
 
 Combines:
 - **Embedding model**: Converts documents and queries into vector format.
