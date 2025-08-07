@@ -1,8 +1,3 @@
-#  Contextual RAG Chatbot with Open WebUI
-
-An interactive chatbot powered by a **Contextual RAG** pipeline, hosted via **Open WebUI**, and built using modern open-source tools and frameworks. This project enables conversational AI that retains and utilizes context across interactions while retrieving relevant knowledge from PDF documents.
-
----
 
 ##  Project Goal
 
