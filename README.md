@@ -107,3 +107,61 @@ Serves as the **bridge between Open WebUI and the chatbot backend**, providing e
 - Agent pipeline orchestration
 
 ---
+
+
+## Architecture Diagram and Flow
+
+### **Enhanced Text-Based Architecture Diagram**
+
+To visualize the flow, I have enclosed the components in boxes and added **Sequence Flow Numbers (①, ②, ③...)** to show how a user’s question travels through the system.
+
+```text
++------------------------------------------------------------------------------------------+
+|                                  USER INTERFACE                                          |
+|  ① [ Open WebUI (Docker) ] <-------------------------------------------+                |
++---------|---------------------------------------------------------------|----------------+
+          | (User Query)                                                  | (Final Response)
+          v                                                               |
++-----------------------+           +-------------------------------------|----------------+
+|      API LAYER        |           |          AGENTIC ORCHESTRATION      |                |
+|  ② [ FastAPI ]        | --------> |  ③ [ Crew.AI (Specialist Agents) ] -+                |
++-----------------------+           +---------|--------------------------------------------+
+                                              | (Task Delegation)
+                                              v
++------------------------------------------------------------------------------------------+
+|                                    RAG ENGINE                                            |
+|  ④ [ LlamaIndex + Contextual RAG Logic ]                                                 |
++---------|-----------------------------------|--------------------------------------------+
+          | (Vector Retrieval)                | (Augmentation & LLM Call)
+          v                                   v
++-------------------------+         +--------------------------+     +---------------------+
+|    VECTOR DATABASE      |         |     LOCAL LLM ENGINE     |     |    OBSERVABILITY    |
+| ⑤ [ PGVector / PG ]     |         | ⑥ [ Ollama (Gemma 2b) ]  |     | ⑦ [ MLflow / Phoenix]|
++-------------------------+         +--------------------------+     |     [ RAGAs Eval ]  |
+                                                                     +---------------------+
+
+```
+
+---
+
+### **Sequential Step-by-Step Flow**
+
+1. **① User Input:** The user types a question regarding HR or Procurement into the **Open WebUI**.
+2. **② API Routing:** The request is sent to **FastAPI**, which acts as the gateway to your Python logic.
+3. **③ Agent Orchestration:** **Crew.AI** receives the request. A "Researcher" agent is assigned to find facts using the LlamaIndex tool.
+4. **④ Contextual Retrieval:** **LlamaIndex** doesn't just look for keywords; it looks for the **Contextualized Chunks** (the ones we prepared with document summaries).
+5. **⑤ Database Query:** LlamaIndex performs a similarity search in **PGVector** to find the top N most relevant chunks.
+6. **⑥ Generation:** The retrieved context is sent to **Ollama (Gemma 2b)**. The LLM synthesizes the final answer based *only* on the provided context.
+7. **⑦ Monitoring & Eval:** Throughout this process, **MLflow** records the trace, **Arize Phoenix** monitors the prompt quality, and **RAGAs** calculates the faithfulness score.
+
+---
+
+### **The "Contextual Ingestion" Pre-Process (Running Before Chat)**
+
+Before the user can chat, the data must be prepared. This is a one-time setup flow:
+
+1. **Docling** converts the 5 PDFs into Clean Markdown.
+2. **Gemma (Ollama)** reads each document and generates a "Situation Summary" for every chunk.
+3. **LlamaIndex** combines (Chunk + Summary), creates an embedding, and saves it into **PGVector**.
+
+
