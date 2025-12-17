@@ -166,22 +166,18 @@ Before the user can chat, the data must be prepared. This is a one-time setup fl
 
 ## Architecture Diagram (other view)
 
-[ USER INTERFACE ] <-----------> [ API LAYER ] <-----------> [ AGENTIC ORCHESTRATION ]
-  Open WebUI (Docker)             FastAPI                  Crew.AI (Agents & Tasks)
-                                                                 |
-                                                                 v
-                                                        [ RAG ENGINE ] (LlamaIndex)
-                                                       /             \
-       (Retrieval Phase) <----------------------------                ------------> (Generation Phase)
-              |                                                                           |
-      [ VECTOR DATABASE ]                                                         [ LOCAL LLM ENGINE ]
-    PostgreSQL + PGVector                                                        Ollama (Gemma 2b)
-              ^                                                                           |
-              | (Ingestion)                                                               v
-      [ DATA PIPELINE ]                                                           [ OBSERVABILITY ]
-    Docling (PDF -> MD)                                                          MLflow 3.0 (Traces)
-    + Contextualization                                                          Arize Phoenix (Prompts)
-              ^                                                                  RAGAs (Evaluation)
-              |
-      [ INPUT FILES ]
-    HR_Bylaws, Ariba, etc.
+[ PDF DATA ]
+            |
+            v
++-----------------------+      +-----------------------+      +-----------------------+
+|   1. DATA PIPELINE    |      |   2. STORAGE LAYER    |      |    3. UI & API        |
+| [Docling] -> [Gemma]  | ===> | [PostgreSQL/PGVector] | <==> | [Open WebUI/FastAPI]  |
++-----------------------+      +-----------------------+      +-----------|-----------+
+                                                                          |
+                                                                          v
++-----------------------+      +-----------------------+      +-----------------------+
+|    6. EVALUATION      |      |    5. LLM ENGINE      |      |   4. ORCHESTRATION    |
+| [RAGAs] -> [Phoenix]  | <--- |  [Ollama / Gemma 2b]  | <--- | [Crew.AI / LlamaIndex]|
++-----------------------+      +-----------------------+      +-----------------------+
+            ^                               |                          |
+            +---------------- [ MLflow 3.0 Tracking ] -----------------+
